@@ -1,0 +1,61 @@
+# @package _global_
+defaults:
+  - /evaluators/matt3r@EVALUATORS.matt3r
+  - override /meta_arch: dd3d
+  - override /train_datasets@DATASETS.TRAIN: matt3r_train
+  - override /test_datasets@DATASETS.TEST: matt3r_test
+  - override /feature_extractors@FE: v2_99_fpn
+
+MODEL:
+  # from-coco, IODA-pretrained.
+  CKPT: /workspace/dd3d/weights/v2-99/model_final.pth
+
+FE:
+  BACKBONE:
+    NORM: FrozenBN
+  FPN:
+    NORM: FrozenBN
+  OUT_FEATURES: ${.FPN.OUT_FEATURES}
+
+DD3D:
+  FCOS2D:
+    NORM: BN
+    INFERENCE:
+      NMS_THRESH: 0.75
+
+  FCOS3D:
+    NORM: FrozenBN
+
+INPUT:
+  RESIZE:
+    # KITTI images are (370, 1224)
+    MIN_SIZE_TRAIN: [288, 304, 320, 336, 352, 368, 384, 400, 416, 448, 480, 512, 544, 576]
+    MAX_SIZE_TRAIN: 10000
+    MIN_SIZE_TEST: 384
+    MAX_SIZE_TEST: 100000
+
+SOLVER:
+  IMS_PER_BATCH: 64 # need at least 128 GPU mem (with fp16).
+  BASE_LR: 0.002
+  MAX_ITER: 25000
+  STEPS: [21500, 24000]
+  WARMUP_ITERS: 2000
+  MIXED_PRECISION_ENABLED: True
+  CHECKPOINT_PERIOD: 2000
+
+TEST:
+  IMS_PER_BATCH: 80
+  EVAL_PERIOD: 2000
+  AUG:
+    ENABLED: True
+    MIN_SIZES: [320, 384, 448, 512, 576]
+    MAX_SIZE: 100000
+    FLIP: True
+
+
+WANDB:
+  ENABLED: True
+  # If True, then it will not upload to the W&B server.
+  PROJECT: dd3d
+  GROUP:
+  TAGS: ['matter']
